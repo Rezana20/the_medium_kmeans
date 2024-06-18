@@ -19,12 +19,11 @@ class LearnKMeans:
 
     def prepare_data(self):
         print('Preparing data...')
-        print(self.df)
         print('Shape of data:', self.df.shape)
-        print('Missing values:', self.df.isnull().sum())
-        print(self.df.info())
-        print('Drop redy species:', self.df.dropna(axis=0, how='any'))
-        print(self.df.describe())
+        print('Missing values:\n', self.df.isnull().sum())
+        print(self.df.info)
+        self.df.dropna(axis=0, how='any')
+        print('Describe:\n', self.df.describe())
 
         # Extract the numerical columns to scale
         numerical_cols = self.df.columns[:-1]
@@ -90,4 +89,6 @@ if __name__ == '__main__':
     kmeans = LearnKMeans()
     kmeans.visualise_data()
     kmeans.prepare_data()
-    print('Optimal k:', kmeans.select_k_with_elbow())
+    optimal_k = kmeans.select_k_with_elbow()
+    print('Optimal k:', optimal_k)
+
