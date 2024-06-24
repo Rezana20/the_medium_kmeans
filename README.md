@@ -4,7 +4,8 @@ The full details can be found on <insert_link>
 
 # Running the program
 1. Install all the libraries (`pip install x`) or use a virtual environment
-2. Run using `python3 kmeans.py`
+2. Run using `source kmeans/bin/activate`
+3. `python3 kmeans.py`
 
 # Expected output from prepare_data()
 ```

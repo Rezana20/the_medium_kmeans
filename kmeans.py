@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from kneed import KneeLocator
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 class LearnKMeans:
@@ -31,7 +31,7 @@ class LearnKMeans:
         # Extract the numerical columns to scale
         numerical_cols = self.df.columns[:-1]
 
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         self.df[numerical_cols] = scaler.fit_transform(self.df[numerical_cols])
 
     def visualise_data(self, y_value: str, image_name: str):
