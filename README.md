@@ -1,6 +1,6 @@
 # Kmeans algorithm
 This is a repo for learning about the kmeans clustering algorithm.
-In depth information about the algorithm can be found on [this personal blog post](https://medium.com/@dowra/a-clustering-algorithm-k-means-8b19e701a051)
+In depth information about the algorithm can be found on [this personal blog post.](https://medium.com/@dowra/a-clustering-algorithm-k-means-8b19e701a051)
 The blog post can be used in conjunction with this repo to aid your curiosity and deepen our understanding.
 
 # Package walkthrough:
@@ -12,7 +12,8 @@ The blog post can be used in conjunction with this repo to aid your curiosity an
 - contains an implementation of the algorithm using scikit learn library
 ### kmean_native.py
 - contains a native implementation of the algorithm, this is my personal attempt at using the pseudocode instruction in the blog to challenge myself to code this up. 
-
+### kmeans_chatgpt.py
+- contains an implementation from chatgpt
 
 # Instructions on running the program:
 1. Install all the libraries (`pip install x`) or use activate the virtual environment `source kmeans/bin/activate`

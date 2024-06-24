@@ -37,34 +37,37 @@ class NativeKMeans:
         kmeans.train_kmeans_cluster()
     """
 
-    def __init__(self):
+    def __init__(self, max_iter=100, tol=1e-4):
         """
         Initializes NativeKMeans with pre-processed data and empty centroids DataFrame.
         """
-        self.data = self.pre_process_data()
+        self.max_iter = max_iter
+        self.tolerance = tol
+        self.data = pd.DataFrame()
         self.centroids = pd.DataFrame()
+        self.pre_process_data()
+        self.n_clusters = self.find_optimal_centroids()
+        self.initialise_centroids()
 
-    def pre_process_data(self) -> pd.DataFrame:
+    def pre_process_data(self):
         """
         Reads and pre-processes data from 'driver-data.csv'.
 
         Returns:
             pd.DataFrame: Pre-processed DataFrame with scaled numeric features and dropped IDs.
         """
-        data = pd.read_csv('data/driver-data.csv')
-        data.info()
-        data.describe()
-        data.dropna(inplace=True)
-        data.isnull().sum()
+        self.data = pd.read_csv('data/driver-data.csv')
+        self.data.info()
+        self.data.describe()
+        self.data.dropna(inplace=True)
+        self.data.isnull().sum()
 
         scaler = StandardScaler()
-        data[['mean_dist_day', 'mean_over_speed_perc']] = scaler.fit_transform(
-            data[['mean_dist_day', 'mean_over_speed_perc']])
-        data = data.drop(['id'], axis=1)
+        self.data[['mean_dist_day', 'mean_over_speed_perc']] = scaler.fit_transform(
+            self.data[['mean_dist_day', 'mean_over_speed_perc']])
+        self.data = self.data.drop(['id'], axis=1)
 
-        return data
-
-    def find_optimal_centroids(self) -> int:
+    def find_optimal_centroids(self):
         """
         Finds the optimal number of centroids (k) using the elbow method with KneeLocator.
 
@@ -79,18 +82,24 @@ class NativeKMeans:
             kmeans.fit(self.data[['mean_dist_day', 'mean_over_speed_perc']])
             inertia.append(kmeans.inertia_)
 
+        plt.plot(range(1, max_clusters + 1), inertia)
+        plt.show()
+
         kneedle = KneeLocator(range(1, max_clusters + 1), inertia, curve='convex', direction='decreasing')
         optimal_k = kneedle.elbow
-        return optimal_k
+        if optimal_k is None:
+            self.n_clusters = 4
+        else:
+            self.n_clusters = optimal_k
 
-    def initialise_centroids(self, k: int):
+
+
+    def initialise_centroids(self):
         """
         Initializes centroids by randomly selecting k samples from pre-processed data.
 
-        Args:
-            k (int): Number of centroids to initialize.
         """
-        self.centroids = self.data[['mean_dist_day', 'mean_over_speed_perc']].sample(n=k)
+        self.centroids = self.data[['mean_dist_day', 'mean_over_speed_perc']].sample(n=self.n_clusters)
         print(self.centroids)
 
     def squared_euclidian_distance(self, x1, x2, y1, y2) -> float:
@@ -108,7 +117,7 @@ class NativeKMeans:
         """
         return np.sqrt((((x2 - x1) ** 2) + ((y2 - y1) ** 2)))
 
-    def train_kmeans_cluster(self, tolerance=1e-4, training_iterations=10):
+    def train_kmeans_cluster(self):
         """
         Trains the K-means clustering algorithm with a specified tolerance and maximum iterations.
 
@@ -121,36 +130,36 @@ class NativeKMeans:
         iteration = 1
         self.data['labels'] = np.zeros(self.data.shape[0])
 
-        while iteration <= training_iterations:
+        while iteration <= self.max_iter:
             print('Iteration {}'.format(iteration))
             # Calculate distances to all centroids
-            distances = np.linalg.norm(
-                self.data[['mean_dist_day', 'mean_over_speed_perc']].values[:, np.newaxis] - self.centroids.values,
-                axis=2)
-
-            # Assign labels based on the nearest centroid
-            self.data['labels'] = np.argmin(distances, axis=1)
-
-            # for index, data_point in self.data.iterrows():
-            #     y2 = data_point['mean_dist_day']
-            #     x2 = data_point['mean_over_speed_perc']
-            #     temp_min = []
+            # distances = np.linalg.norm(
+            #     self.data[['mean_dist_day', 'mean_over_speed_perc']].values[:, np.newaxis] - self.centroids.values,
+            #     axis=2)
             #
-            #     for centroid in self.centroids.values:
-            #         y1 = centroid[0]
-            #         x1 = centroid[1]
-            #         temp_min.append(self.squared_euclidian_distance(x1, x2, y1, y2))
-            #
-            #     self.data.at[index, 'labels'] = temp_min.index(min(temp_min))
+            # # Assign labels based on the nearest centroid
+            # self.data['labels'] = np.argmin(distances, axis=1)
 
-            if self.update_centroids(tolerance):
+            for index, data_point in self.data.iterrows():
+                y2 = data_point['mean_dist_day']
+                x2 = data_point['mean_over_speed_perc']
+                temp_min = []
+
+                for centroid in self.centroids.values:
+                    y1 = centroid[0]
+                    x1 = centroid[1]
+                    temp_min.append(self.squared_euclidian_distance(x1, x2, y1, y2))
+
+                self.data.at[index, 'labels'] = temp_min.index(min(temp_min))
+
+            if self.update_centroids():
                 break
 
             iteration += 1
 
         self.plot_trained_data()
 
-    def update_centroids(self, tolerance) -> bool:
+    def update_centroids(self) -> bool:
         """
         Updates centroids based on assigned cluster data and checks for convergence.
 
@@ -169,7 +178,7 @@ class NativeKMeans:
 
         centroid_shift = np.linalg.norm(new_centroids - self.centroids)
 
-        if centroid_shift < tolerance:
+        if centroid_shift < self.tolerance:
             return True
 
         self.centroids = new_centroids
@@ -189,12 +198,10 @@ class NativeKMeans:
         plt.xlabel('Mean Over Speed Percentile')
         plt.ylabel('Mean Distance Day')
         plt.title('K-means Clustering')
-        plt.savefig('k_means_native_with_sklearn_trained.png')
-        plt.show()
+        plt.savefig('images/k_means_native_with_sklearn_trained.png')
+        # plt.show()
 
 
 if __name__ == '__main__':
     kmeans = NativeKMeans()
-    optimal_k = kmeans.find_optimal_centroids()
-    kmeans.initialise_centroids(optimal_k)
     kmeans.train_kmeans_cluster()
