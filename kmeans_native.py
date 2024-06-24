@@ -51,7 +51,7 @@ class NativeKMeans:
         Returns:
             pd.DataFrame: Pre-processed DataFrame with scaled numeric features and dropped IDs.
         """
-        data = pd.read_csv('driver-data.csv')
+        data = pd.read_csv('data/driver-data.csv')
         data.info()
         data.describe()
         data.dropna(inplace=True)
@@ -72,7 +72,7 @@ class NativeKMeans:
             int: Optimal number of centroids (k) for K-means clustering.
         """
         inertia = []
-        max_clusters = 10  # Adjust based on your dataset and problem
+        max_clusters = 5  # Adjust based on your dataset and problem
 
         for i in range(1, max_clusters + 1):
             kmeans = KMeans(n_clusters=i)
@@ -123,18 +123,25 @@ class NativeKMeans:
 
         while iteration <= training_iterations:
             print('Iteration {}'.format(iteration))
+            # Calculate distances to all centroids
+            distances = np.linalg.norm(
+                self.data[['mean_dist_day', 'mean_over_speed_perc']].values[:, np.newaxis] - self.centroids.values,
+                axis=2)
 
-            for index, data_point in self.data.iterrows():
-                y2 = data_point['mean_dist_day']
-                x2 = data_point['mean_over_speed_perc']
-                temp_min = []
+            # Assign labels based on the nearest centroid
+            self.data['labels'] = np.argmin(distances, axis=1)
 
-                for centroid in self.centroids.values:
-                    y1 = centroid[0]
-                    x1 = centroid[1]
-                    temp_min.append(self.squared_euclidian_distance(x1, x2, y1, y2))
-
-                self.data.at[index, 'labels'] = temp_min.index(min(temp_min))
+            # for index, data_point in self.data.iterrows():
+            #     y2 = data_point['mean_dist_day']
+            #     x2 = data_point['mean_over_speed_perc']
+            #     temp_min = []
+            #
+            #     for centroid in self.centroids.values:
+            #         y1 = centroid[0]
+            #         x1 = centroid[1]
+            #         temp_min.append(self.squared_euclidian_distance(x1, x2, y1, y2))
+            #
+            #     self.data.at[index, 'labels'] = temp_min.index(min(temp_min))
 
             if self.update_centroids(tolerance):
                 break
